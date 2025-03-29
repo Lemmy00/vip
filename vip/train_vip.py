@@ -41,8 +41,8 @@ class Workspace:
             self.setup()
 
         print("Creating Dataloader")
-        train_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.datapath, num_workers=self.cfg.num_workers, doaug=self.cfg.doaug)
-        val_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.datapath, num_workers=self.cfg.num_workers, doaug=0)
+        train_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.datapath, data_type=self.cfg.datatype, num_workers=self.cfg.num_workers, doaug=self.cfg.doaug)
+        val_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.datapath, data_type=self.cfg.datatype, num_workers=self.cfg.num_workers, doaug=0)
 
         self.train_loader = iter(torch.utils.data.DataLoader(train_iterable,
                                          batch_size=self.cfg.batch_size,
@@ -117,12 +117,13 @@ class Workspace:
         torch.save(sdict, snapshot)
         sdict["global_step"] = self._global_step
         torch.save(sdict, global_snapshot)
+        print("VIP model saved at:", global_snapshot)
 
     def load_snapshot(self, snapshot_path):
         payload = torch.load(snapshot_path)
         self.model.load_state_dict(payload['vip'])
         try:
-            self._global_step = payload['global_step']
+            self._global_step = 0 #payload['global_step']
         except:
             print("No global step found")
 

@@ -47,12 +47,13 @@ class VIP(nn.Module):
         elif size == 0:
             from transformers import AutoConfig
             self.outdim = 768
-            self.convnet = AutoModel.from_config(config = AutoConfig.from_pretrained('google/vit-base-patch32-224-in21k')).to(self.device)
+            # self.convnet = AutoModel.from_config(config = AutoConfig.from_pretrained('google/vit-base-patch32-224-in21k')).to(self.device)
+            self.convnet = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14').to(self.device)
 
-        if self.size == 0:
+        '''if self.size == 0:
             self.normlayer = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-        else:
-            self.normlayer = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        else:'''
+        self.normlayer = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
         if hidden_dim  > 0:
             self.convnet.fc = nn.Linear(self.outdim, hidden_dim)

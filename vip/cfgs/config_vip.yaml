@@ -8,10 +8,10 @@ save_snapshot: false
 load_snap: ""
 
 # replay buffer
-num_workers: 10
+num_workers: 16
 batch_size: 32 
-train_steps: 10001
-eval_freq: 1000
+train_steps: 120001
+eval_freq: 10000
 
 # misc
 seed: 1
@@ -23,16 +23,17 @@ wandbuser:
 wandbproject: 
 
 # data
-dataset:
-datapath: 
-doaug: "none"
+dataset: "hm3"
+datapath: "/cluster/scratch/lmilikic/hm3d/episodes/train_episodes"
+datatype: ".mp4" # [.mp4, .png, .jpg]
+doaug: "rctraj"
 
 agent:
   _target_: vip.VIP
   device: ${device}
   lr: 1e-4
-  hidden_dim: 2
-  size: 34
-  l2weight: 0.0
-  l1weight: 0.0
-  num_negatives: 0
+  hidden_dim: 1024
+  size: 50
+  l2weight: 0.001
+  l1weight: 0.001
+  num_negatives: 3

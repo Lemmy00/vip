@@ -13,7 +13,9 @@ os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
 os.environ['MUJOCO_GL'] = 'egl'
 
 from pathlib import Path
+from PIL import Image
 
+import cv2
 import glob
 import numpy as np
 import torch
@@ -39,11 +41,13 @@ def get_ind(vid, index, ds="ego4d"):
 
 ## Data Loader for VIP
 class VIPBuffer(IterableDataset):
-    def __init__(self, datasource='ego4d', datapath=None, num_workers=10, doaug = "none"):
+    def __init__(self, datasource='ego4d', datapath=None, data_type=".png", num_workers=10, doaug = "none"):
         self._num_workers = max(1, num_workers)
         self.datasource = datasource
         self.datapath = datapath
+        self.data_type = data_type
         assert(datapath is not None)
+        assert(data_type is not None)
         self.doaug = doaug
         
         # Augmentations
@@ -65,7 +69,7 @@ class VIPBuffer(IterableDataset):
             print(self.manifest)
             self.ego4dlen = len(self.manifest)
 
-    def _sample(self):
+    def _sample(self):        
         # Sample a video from datasource
         if self.datasource == 'ego4d':
             vidid = np.random.randint(0, self.ego4dlen)
@@ -79,10 +83,13 @@ class VIPBuffer(IterableDataset):
             video_id = np.random.randint(0, int(num_vid)) 
             vid = f"{video_paths[video_id]}"
 
-            # Video frames must be .png or .jpg
-            vidlen = len(glob.glob(f'{vid}/*.png'))
-            if vidlen == 0:
-                vidlen = len(glob.glob(f'{vid}/*.jpg'))
+            if self.data_type in ['.png', '.jpg']:
+                vidlen = len(glob.glob(f'{vid}/*{self.data_type}'))
+            elif self.data_type == '.mp4':
+                loaded_video, _, _ = torchvision.io.read_video(os.path.join(vid, "trajectory.mp4"), pts_unit='sec', output_format='TCHW')
+                vidlen = len(loaded_video)
+            else:
+                raise ValueError(f'Expected data types are: ".png", ".jpg", or ".mp4" but {self.data_type} given.')
 
         # Sample (o_t, o_k, o_k+1, o_T) for VIP training
         start_ind = np.random.randint(0, vidlen-2)  
@@ -94,13 +101,20 @@ class VIPBuffer(IterableDataset):
         # Self-supervised reward (this is always -1)
         reward = float(s0_ind_vip == end_ind) - 1
 
-        if self.doaug == "rctraj":
-            ### Encode each image in the video at once the same way
+        if self.data_type == '.mp4':
+            assert(loaded_video is not None)
+            im0 = loaded_video[start_ind] 
+            img = loaded_video[end_ind]
+            imts0_vip = loaded_video[s0_ind_vip] 
+            imts1_vip = loaded_video[s1_ind_vip] 
+        else:
             im0 = get_ind(vid, start_ind, self.datasource) 
             img = get_ind(vid, end_ind, self.datasource)
             imts0_vip = get_ind(vid, s0_ind_vip, self.datasource)
             imts1_vip = get_ind(vid, s1_ind_vip, self.datasource)
-            
+
+        if self.doaug == "rctraj":
+            ### Encode each image in the video at once the same way
             allims = torch.stack([im0, img, imts0_vip, imts1_vip], 0)
             allims_aug = self.aug(allims / 255.0) * 255.0
 
@@ -108,13 +122,12 @@ class VIPBuffer(IterableDataset):
             img = allims_aug[1]
             imts0_vip = allims_aug[2]
             imts1_vip = allims_aug[3]
-
         else:
             ### Encode each image individually
-            im0 = self.aug(get_ind(vid, start_ind, self.datasource) / 255.0) * 255.0
-            img = self.aug(get_ind(vid, end_ind, self.datasource) / 255.0) * 255.0
-            imts0_vip = self.aug(get_ind(vid, s0_ind_vip, self.datasource) / 255.0) * 255.0
-            imts1_vip = self.aug(get_ind(vid, s1_ind_vip, self.datasource) / 255.0) * 255.0
+            im0 = self.aug(im0 / 255.0) * 255.0
+            img = self.aug(img / 255.0) * 255.0
+            imts0_vip = self.aug(imts0_vip / 255.0) * 255.0
+            imts1_vip = self.aug(imts1_vip / 255.0) * 255.0
 
         im = torch.stack([im0, img, imts0_vip, imts1_vip])
         im = self.preprocess(im)
