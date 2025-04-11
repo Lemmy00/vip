@@ -53,11 +53,12 @@ class VIPBuffer(IterableDataset):
         # Augmentations
         self.preprocess = torch.nn.Sequential(
                         transforms.Resize(256),
-                        transforms.CenterCrop(224)
+                        transforms.CenterCrop(224),
+                        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
                 )
         if doaug in ["rc", "rctraj"]:
             self.aug = torch.nn.Sequential(
-                transforms.RandomResizedCrop(224, scale = (0.2, 1.0)),
+                transforms.RandomResizedCrop(224, scale=(0.2, 1.0)),
             )
         else:
             self.aug = lambda a : a
@@ -87,6 +88,7 @@ class VIPBuffer(IterableDataset):
                 vidlen = len(glob.glob(f'{vid}/*{self.data_type}'))
             elif self.data_type == '.mp4':
                 loaded_video, _, _ = torchvision.io.read_video(os.path.join(vid, "trajectory.mp4"), pts_unit='sec', output_format='TCHW')
+                loaded_video = loaded_video.to(torch.float32) / 255.0
                 vidlen = len(loaded_video)
             else:
                 raise ValueError(f'Expected data types are: ".png", ".jpg", or ".mp4" but {self.data_type} given.')
@@ -95,10 +97,10 @@ class VIPBuffer(IterableDataset):
         start_ind = np.random.randint(0, vidlen-2)  
         end_ind = np.random.randint(start_ind+1, vidlen)
 
-        s0_ind_vip = np.random.randint(start_ind, end_ind)
+        s0_ind_vip = np.random.randint(start_ind, end_ind + 1)
         s1_ind_vip = min(s0_ind_vip+1, end_ind)
         
-        # Self-supervised reward (this is always -1)
+        # Self-supervised reward
         reward = float(s0_ind_vip == end_ind) - 1
 
         if self.data_type == '.mp4':

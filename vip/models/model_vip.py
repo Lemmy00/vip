@@ -50,9 +50,6 @@ class VIP(nn.Module):
             # self.convnet = AutoModel.from_config(config = AutoConfig.from_pretrained('google/vit-base-patch32-224-in21k')).to(self.device)
             self.convnet = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14').to(self.device)
 
-        '''if self.size == 0:
-            self.normlayer = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-        else:'''
         self.normlayer = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
         if hidden_dim  > 0:
@@ -73,12 +70,11 @@ class VIP(nn.Module):
             preprocess = nn.Sequential(
                         transforms.Resize(256),
                         transforms.CenterCrop(224),
-                        self.normlayer,
+                        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                 )
         else:
-            preprocess = nn.Sequential(
-                        self.normlayer,
-                )
+            preprocess = nn.Identity()
+        
         ## Input must be [0, 255], [3,224,224]
         if torch.max(obs) > 2.0:
             obs = obs.float() /  255.0
@@ -89,4 +85,3 @@ class VIP(nn.Module):
     def sim(self, tensor1, tensor2):
         d = -torch.linalg.norm(tensor1 - tensor2, dim = -1)
         return d
-    

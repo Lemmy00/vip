@@ -4,6 +4,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 from vip.models.model_vip import VIP
+from vip.models.model_nav_vip import DistanceModel
 
 import os 
 from os.path import expanduser
@@ -14,7 +15,11 @@ import torch
 from torch.hub import load_state_dict_from_url
 import copy
 
-VALID_ARGS = ["_target_", "device", "lr", "hidden_dim", "size", "l2weight", "l1weight", "num_negatives"]
+VALID_ARGS = [
+    "_target_", "device", "lr", "hidden_dim", "size",
+    "l2weight", "l1weight", "num_negatives", "dist_type",
+    "output_dim", "decoder_layers", "gamma"
+]
 if torch.cuda.is_available():
     device = "cuda"
 else:
@@ -26,7 +31,7 @@ def cleanup_config(cfg):
     for key in list(keys):
         if key not in VALID_ARGS:
             del config.agent[key]
-    config.agent["_target_"] = "vip.VIP"
+    assert config.agent["_target_"] in ["vip.VIP", "vip.DistanceModel"]
     config["device"] = device
 
     return config.agent
@@ -54,6 +59,9 @@ def load_vip(modelid='resnet50'):
         elif modelid == "resnet50-nav":
             if not os.path.exists(modelpath):
                 raise ValueError("Resnet50-nav-based model not given")
+        elif modelid == "vip-nav-l2":
+            if not os.path.exists(modelpath):
+                raise ValueError("Nav-VIP-L2 model not given")
         else:
             raise NameError('Invalid Model ID')
             

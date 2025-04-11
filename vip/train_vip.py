@@ -42,14 +42,14 @@ class Workspace:
 
         print("Creating Dataloader")
         train_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.datapath, data_type=self.cfg.datatype, num_workers=self.cfg.num_workers, doaug=self.cfg.doaug)
-        val_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.datapath, data_type=self.cfg.datatype, num_workers=self.cfg.num_workers, doaug=0)
+        val_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.datapath if self.cfg.valpath is None else self.cfg.valpath, data_type=self.cfg.datatype, num_workers=self.cfg.num_workers, doaug=0)
 
         self.train_loader = iter(torch.utils.data.DataLoader(train_iterable,
                                          batch_size=self.cfg.batch_size,
                                          num_workers=self.cfg.num_workers,
                                          pin_memory=True))
         self.val_loader = iter(torch.utils.data.DataLoader(val_iterable,
-                                         batch_size=self.cfg.batch_size,
+                                         batch_size=self.cfg.batch_size * 4,
                                          num_workers=self.cfg.num_workers,
                                          pin_memory=True))
 
@@ -82,7 +82,7 @@ class Workspace:
         train_until_step = utils.Until(self.cfg.train_steps, 1)
         eval_freq = self.cfg.eval_freq
         eval_every_step = utils.Every(eval_freq, 1)
-        trainer = Trainer(eval_freq)
+        trainer = Trainer(eval_freq, self.cfg.task_type)
 
         ## Training Loop
         print("Begin Training")
@@ -123,7 +123,7 @@ class Workspace:
         payload = torch.load(snapshot_path)
         self.model.load_state_dict(payload['vip'])
         try:
-            self._global_step = 0 #payload['global_step']
+            self._global_step = payload['global_step']
         except:
             print("No global step found")
 

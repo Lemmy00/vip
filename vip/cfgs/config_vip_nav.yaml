@@ -1,0 +1,41 @@
+defaults:
+  - _self_
+  - override hydra/launcher:  local
+  - override hydra/output:  local
+
+# snapshot
+save_snapshot: false
+load_snap: ""
+
+# replay buffer
+num_workers: 16
+batch_size: 32 
+train_steps: 16001
+eval_freq: 2000
+task_type: "nav"
+
+# misc
+seed: 1
+device: cuda
+
+# experiment
+experiment: train_vip_nav
+wandbuser: 
+wandbproject: 
+
+# data
+dataset: "hm3"
+datapath: "/cluster/scratch/lmilikic/hm3d/episodes/train_episodes"
+valpath: "/cluster/scratch/lmilikic/hm3d/episodes/val_episodes"
+datatype: ".mp4" # [.mp4, .png, .jpg]
+doaug: "rctraj"
+
+agent:
+  _target_: vip.DistanceModel
+  device: ${device}
+  lr: 1e-4
+  output_dim: 1024
+  decoder_layers: 3
+  dist_type: "linear"
+  num_negatives: 3
+  gamma: 0.98
