@@ -15,6 +15,19 @@ from pathlib import Path
 from torchvision.utils import save_image
 import torchvision.transforms as T
 
+
+class DinoDistModel(nn.Module):
+    def __init__(self, hidden_dim):
+        super().__init__()
+        self.dino = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14')
+        self.outdim = 768  
+        self.fc = nn.Linear(self.outdim, hidden_dim)
+
+    def forward(self, x):
+        features = self.dino(x)
+        return self.fc(features)
+
+
 class VIP(nn.Module):
     def __init__(self, device="cuda", lr=1e-4, hidden_dim=1024, size=50, l2weight=1.0, l1weight=1.0, gamma=0.98, num_negatives=0):
         super().__init__()
@@ -47,10 +60,8 @@ class VIP(nn.Module):
         elif size == 0:
             from transformers import AutoConfig
             self.outdim = 768
-            # self.convnet = AutoModel.from_config(config = AutoConfig.from_pretrained('google/vit-base-patch32-224-in21k')).to(self.device)
-            self.convnet = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14').to(self.device)
-
-        self.normlayer = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            assert hidden_dim > 0
+            self.convnet = DinoDistModel(self.hidden_dim)
 
         if hidden_dim  > 0:
             self.convnet.fc = nn.Linear(self.outdim, hidden_dim)
