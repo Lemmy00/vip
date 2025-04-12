@@ -133,10 +133,10 @@ class Trainer():
         
         t3 = time.time()
         ## VIP Loss 
-        V_0 = model.module.sim_ete(e0, eg) # -||phi(s) - phi(g)||_2
+        V_0 = model.module.sim(model(e0, eg)) # -||phi(s) - phi(g)||_2
         r =  b_reward.to(V_0.device) # R(s;g) = (s==g) - 1 
-        V_s = model.module.sim_ete(es0_vip, eg)
-        V_s_next = model.module.sim_ete(es1_vip, eg)
+        V_s = model.module.sim(model(es0_vip, eg))
+        V_s_next = model.module.sim(model(es1_vip, eg))
         V_loss = (1-model.module.gamma) * -V_0.mean() + torch.log(epsilon + torch.mean(torch.exp(-(r + model.module.gamma * V_s_next - V_s))))
 
         # Optionally, add additional "negative" observations
@@ -147,8 +147,8 @@ class Trainer():
             es0_vip_shuf = es0_vip[perm]
             es1_vip_shuf = es1_vip[perm]
 
-            V_s_neg.append(model.module.sim_ete(es0_vip_shuf, eg))
-            V_s_next_neg.append(model.module.sim_ete(es1_vip_shuf, eg))
+            V_s_neg.append(model.module.sim(model(es0_vip_shuf, eg)))
+            V_s_next_neg.append(model.module.sim(model(es1_vip_shuf, eg)))
 
         if model.module.num_negatives > 0:
             V_s_neg = torch.cat(V_s_neg)

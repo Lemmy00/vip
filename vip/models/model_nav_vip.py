@@ -18,7 +18,6 @@ class DistanceModel(nn.Module):
         decoder_layers: int = 3,
         nhead: int = 8,
         dist_type: str = "linear",
-        output_dim: int = 768,
         lr: float = 1e-4,
         num_negatives: int = 3,
         gamma: float = 0.98
@@ -30,7 +29,6 @@ class DistanceModel(nn.Module):
             decoder_layers (int): Number of Transformer decoder layers.
             nhead (int): Number of attention heads for the decoder.
             dist_type (str): Type of the final prediction head.
-            output_dim (int): Dimension of the output of the prediction head.
             lr (float): learning rate
         """
         super().__init__()
@@ -52,22 +50,18 @@ class DistanceModel(nn.Module):
 
         # Determine the embedding dimension using a dummy forward pass.
         self.embed_dim = self._get_embed_dim()
-        self.output_dim = output_dim
         
         # Build the Transformer decoder.
         decoder_layer = nn.TransformerDecoderLayer(d_model=self.embed_dim, nhead=nhead)
         self.decoder = nn.TransformerDecoder(decoder_layer, num_layers=decoder_layers)
 
-        # Prediction head operating on the output CLS token from the decoder.
-        self.head = nn.Linear(self.embed_dim, self.output_dim)
-
         # Distance prediction operating on the output from the model.
         self.dist_type = dist_type
         if self.dist_type == "linear":
-            self.dist = nn.Sequential(nn.Linear(self.output_dim, 1), 
+            self.head = nn.Sequential(nn.Linear(self.embed_dim, 1), 
                                       nn.Softplus())
         elif self.dist_type == "l2":
-            self.dist = nn.Identity()
+            self.head = nn.Identity()
         else:
             raise ValueError(f"Unsupported head type: {dist_type}")
 
@@ -155,24 +149,22 @@ class DistanceModel(nn.Module):
         Returns:
             torch.Tensor: A tensor of distance scores for each batch element.
         """
-        goal_dist = self.dist(self.forward(image_I, image_G))
+        goal_dist = self.forward(image_I, image_G)
         if self.dist_type == "linear":
             return -goal_dist
         elif self.dist_type == "l2":
             return -torch.linalg.norm(goal_dist, dim=-1)
 
-    def sim(self, dense_dist: torch.Tensor) -> torch.Tensor:
+    def sim(self, goal_dist: torch.Tensor) -> torch.Tensor:
         """
-        Computes the distance between two images given the already encoded dense
-        distance.
+        Computes the distance between two images given the already encoded distance.
         
         Args:
-            dense_dist (torch.Tensor): Encoded dense distance.
+            dense_dist (torch.Tensor): Encoded distance.
         
         Returns:
             torch.Tensor: A tensor of distance scores for each batch element.
         """
-        goal_dist = self.dist(dense_dist)
         if self.dist_type == "linear":
             return -goal_dist
         elif self.dist_type == "l2":

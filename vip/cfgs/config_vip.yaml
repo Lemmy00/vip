@@ -12,6 +12,7 @@ num_workers: 16
 batch_size: 32 
 train_steps: 120001
 eval_freq: 10000
+task_type: "man"
 
 # misc
 seed: 1
@@ -25,6 +26,7 @@ wandbproject:
 # data
 dataset: "hm3"
 datapath: "/cluster/scratch/lmilikic/hm3d/episodes/train_episodes"
+valpath: "/cluster/scratch/lmilikic/hm3d/episodes/val_episodes"
 datatype: ".mp4" # [.mp4, .png, .jpg]
 doaug: "rctraj"
 
@@ -36,4 +38,5 @@ agent:
   size: 50
   l2weight: 0.001
   l1weight: 0.001
-  num_negatives: 3
+  num_negatives: 0
+  

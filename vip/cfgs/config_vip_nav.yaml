@@ -34,8 +34,7 @@ agent:
   _target_: vip.DistanceModel
   device: ${device}
   lr: 1e-4
-  output_dim: 1024
   decoder_layers: 3
   dist_type: "linear"
-  num_negatives: 3
+  num_negatives: 0
   gamma: 0.98
