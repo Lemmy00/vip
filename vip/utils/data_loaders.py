@@ -41,7 +41,7 @@ def get_ind(vid, index, ds="ego4d"):
 
 ## Data Loader for VIP
 class VIPBuffer(IterableDataset):
-    def __init__(self, datasource='ego4d', datapath=None, data_type=".png", num_workers=10, doaug = "none"):
+    def __init__(self, datasource='ego4d', datapath=None, data_type=".png", num_workers=10, doaug="none", task_type="man"):
         self._num_workers = max(1, num_workers)
         self.datasource = datasource
         self.datapath = datapath
@@ -49,6 +49,7 @@ class VIPBuffer(IterableDataset):
         assert(datapath is not None)
         assert(data_type is not None)
         self.doaug = doaug
+        self.task_type = task_type
         
         # Augmentations
         self.preprocess = torch.nn.Sequential(
@@ -101,7 +102,12 @@ class VIPBuffer(IterableDataset):
         s1_ind_vip = min(s0_ind_vip+1, end_ind)
         
         # Self-supervised reward
-        reward = float(s0_ind_vip == end_ind) - 1
+        if self.task_type == "man":
+            reward = float(s0_ind_vip == end_ind) - 1
+        elif self.task_type == "nav":
+            reward = (float(s0_ind_vip == end_ind) - 1, float(start_ind - end_ind))
+        else:
+            raise ValueError(f"Unknown task type given {self.task_type}. Currently supported task types [nav, man].")
 
         if self.data_type == '.mp4':
             assert(loaded_video is not None)
