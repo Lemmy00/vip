@@ -50,13 +50,16 @@ def load_vip(modelid='resnet50'):
         if modelid == "resnet50":
             modelurl= "https://pytorch.s3.amazonaws.com/models/rl/vip/model.pt"
             configurl = "https://pytorch.s3.amazonaws.com/models/rl/vip/config.yaml"
-        elif modelid == "dinov2":
+        elif modelid == "dinov2-nav":
             if not os.path.exists(modelpath):
                 raise ValueError("DinoV2-based model not given")
-        elif modelid == "resnet50-tuned":
+        elif modelid == "dinov2-nav-2":
             if not os.path.exists(modelpath):
-                raise ValueError("Resnet50-tuned-based model not given")
+                raise ValueError("DinoV2-based model not given")
         elif modelid == "resnet50-nav":
+            if not os.path.exists(modelpath):
+                raise ValueError("Resnet50-nav-based model not given")
+        elif modelid == "resnet50-nav-2":
             if not os.path.exists(modelpath):
                 raise ValueError("Resnet50-nav-based model not given")
         elif modelid == "vip-nav-l2":
