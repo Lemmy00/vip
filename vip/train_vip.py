@@ -41,8 +41,8 @@ class Workspace:
             self.setup()
 
         print("Creating Dataloader")
-        train_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.datapath, data_type=self.cfg.datatype, num_workers=self.cfg.num_workers, doaug=self.cfg.doaug)
-        val_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.datapath if self.cfg.valpath is None else self.cfg.valpath, data_type=self.cfg.datatype, num_workers=self.cfg.num_workers, doaug=0)
+        train_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.datapath, data_type=self.cfg.datatype, num_workers=self.cfg.num_workers, doaug=self.cfg.doaug, task_type=self.cfg.task_type)
+        val_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.valpath, data_type=self.cfg.datatype, num_workers=self.cfg.num_workers, doaug=0, task_type=self.cfg.task_type)
 
         self.train_loader = iter(torch.utils.data.DataLoader(train_iterable,
                                          batch_size=self.cfg.batch_size,
@@ -82,7 +82,7 @@ class Workspace:
         train_until_step = utils.Until(self.cfg.train_steps, 1)
         eval_freq = self.cfg.eval_freq
         eval_every_step = utils.Every(eval_freq, 1)
-        trainer = Trainer(eval_freq, self.cfg.task_type)
+        trainer = Trainer(eval_freq, task_type=self.cfg.task_type)
 
         ## Training Loop
         print("Begin Training")

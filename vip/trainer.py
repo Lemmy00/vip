@@ -42,6 +42,7 @@ class Trainer():
         t1 = time.time()
         ## Batch
         b_im, b_reward = batch
+        total_rew, steps = b_reward
         t2 = time.time()
 
         ## Encode Start and End Frames
@@ -70,11 +71,11 @@ class Trainer():
 
         ## VIP Loss 
         V_0 = model.module.sim(e0, eg) # -||phi(s) - phi(g)||_2
-        r =  b_reward.to(V_0.device) # R(s;g) = (s==g) - 1 
+        r =  total_rew.to(V_0.device) # R(s;g) = (s==g) - 1 
         V_s = model.module.sim(es0_vip, eg)
         V_s_next = model.module.sim(es1_vip, eg)
-        V_loss = (1-model.module.gamma) * -V_0.mean() + torch.log(epsilon + torch.mean(torch.exp(-(r + model.module.gamma * V_s_next - V_s))))
-
+        s = steps.to(V_0.device)
+        V_loss = (1-model.module.gamma) * -V_0.mean() + torch.log(epsilon + torch.mean(torch.exp(-(r + (model.module.gamma ** s) * V_s_next - V_s))))
         # Optionally, add additional "negative" observations
         V_s_neg = []
         V_s_next_neg = []
@@ -117,6 +118,7 @@ class Trainer():
         t1 = time.time()
         ## Batch
         b_im, b_reward = batch
+        total_rew, steps = b_reward
         t2 = time.time()
 
         ## Encode Start and End Frames
@@ -134,10 +136,11 @@ class Trainer():
         t3 = time.time()
         ## VIP Loss 
         V_0 = model.module.sim(model(e0, eg)) # -||phi(s) - phi(g)||_2
-        r =  b_reward.to(V_0.device) # R(s;g) = (s==g) - 1 
+        r =  total_rew.to(V_0.device) # R(s;g) = (s==g) - 1 
         V_s = model.module.sim(model(es0_vip, eg))
         V_s_next = model.module.sim(model(es1_vip, eg))
-        V_loss = (1-model.module.gamma) * -V_0.mean() + torch.log(epsilon + torch.mean(torch.exp(-(r + model.module.gamma * V_s_next - V_s))))
+        s = steps.to(V_0.device)
+        V_loss = (1-model.module.gamma) * -V_0.mean() + torch.log(epsilon + torch.mean(torch.exp(-(r + (model.module.gamma ** s) * V_s_next - V_s))))
 
         # Optionally, add additional "negative" observations
         V_s_neg = []

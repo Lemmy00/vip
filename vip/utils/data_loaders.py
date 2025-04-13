@@ -41,7 +41,7 @@ def get_ind(vid, index, ds="ego4d"):
 
 ## Data Loader for VIP
 class VIPBuffer(IterableDataset):
-    def __init__(self, datasource='ego4d', datapath=None, data_type=".png", num_workers=10, doaug = "none"):
+    def __init__(self, datasource='ego4d', datapath=None, data_type=".png", num_workers=10, doaug = "none", task_type="man"):
         self._num_workers = max(1, num_workers)
         self.datasource = datasource
         self.datapath = datapath
@@ -49,6 +49,7 @@ class VIPBuffer(IterableDataset):
         assert(datapath is not None)
         assert(data_type is not None)
         self.doaug = doaug
+        self.task_type = task_type
         
         # Augmentations
         self.preprocess = torch.nn.Sequential(
@@ -97,12 +98,15 @@ class VIPBuffer(IterableDataset):
         start_ind = np.random.randint(0, vidlen-2)  
         end_ind = np.random.randint(start_ind+1, vidlen)
 
-        s0_ind_vip = np.random.randint(start_ind, end_ind + 1)
-        s1_ind_vip = min(s0_ind_vip+1, end_ind)
+        s0_ind_vip = np.random.randint(start_ind, end_ind)
+        if s0_ind_vip + 1 == end_ind:
+            s1_ind_vip = end_ind
+        else:
+            s1_ind_vip = np.random.randint(s0_ind_vip + 1, min(s0_ind_vip + 5, end_ind))
         
         # Self-supervised reward
-        reward = float(s0_ind_vip == end_ind) - 1
-
+        reward = (sum([(float((s0_ind_vip + (i + 1)) == end_ind) - 1) * (0.98 ** i) for i in range(s1_ind_vip - s0_ind_vip)]), float(start_ind - end_ind))
+        
         if self.data_type == '.mp4':
             assert(loaded_video is not None)
             im0 = loaded_video[start_ind] 

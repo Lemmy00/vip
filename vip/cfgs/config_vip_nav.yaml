@@ -9,7 +9,7 @@ load_snap: ""
 
 # replay buffer
 num_workers: 16
-batch_size: 32 
+batch_size: 64 
 train_steps: 16001
 eval_freq: 2000
 task_type: "nav"
