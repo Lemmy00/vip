@@ -53,15 +53,12 @@ def load_vip(modelid='resnet50'):
         elif modelid == "dinov2":
             if not os.path.exists(modelpath):
                 raise ValueError("DinoV2-based model not given")
-        elif modelid == "resnet50-tuned":
+        elif modelid in ["vip-resnet50-nav", "vip-resnet50-nav-2"]:
             if not os.path.exists(modelpath):
-                raise ValueError("Resnet50-tuned-based model not given")
-        elif modelid == "resnet50-nav":
+                raise ValueError("Resnet50-nav model not given")
+        elif modelid in ["vip-dino", "vip-dino-2"]:
             if not os.path.exists(modelpath):
-                raise ValueError("Resnet50-nav-based model not given")
-        elif modelid == "vip-nav-l2":
-            if not os.path.exists(modelpath):
-                raise ValueError("Nav-VIP-L2 model not given")
+                raise ValueError("Resnet50-nav model not given")
         else:
             raise NameError('Invalid Model ID')
             

@@ -41,8 +41,8 @@ class Workspace:
             self.setup()
 
         print("Creating Dataloader")
-        train_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.datapath, data_type=self.cfg.datatype, num_workers=self.cfg.num_workers, doaug=self.cfg.doaug, task_type=self.cfg.task_type)
-        val_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.valpath, data_type=self.cfg.datatype, num_workers=self.cfg.num_workers, doaug=0, task_type=self.cfg.task_type)
+        train_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.datapath, data_type=self.cfg.datatype, num_workers=self.cfg.num_workers, doaug=self.cfg.doaug, task_type=self.cfg.task_type, max_dist=self.cfg.max_dist)
+        val_iterable = VIPBuffer(datasource=self.cfg.dataset, datapath=self.cfg.valpath, data_type=self.cfg.datatype, num_workers=self.cfg.num_workers, doaug=0, task_type=self.cfg.task_type, max_dist=self.cfg.max_dist)
 
         self.train_loader = iter(torch.utils.data.DataLoader(train_iterable,
                                          batch_size=self.cfg.batch_size,

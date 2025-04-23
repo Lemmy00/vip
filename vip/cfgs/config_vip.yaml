@@ -10,23 +10,26 @@ load_snap: ""
 # replay buffer
 num_workers: 16
 batch_size: 32 
-train_steps: 120001
-eval_freq: 10000
+train_steps: 50001
+eval_freq: 5000
+max_dist: 20
 
 # misc
 seed: 1
 device: cuda
 
 # experiment
-experiment: train_vip
+experiment: train_vip_max20
 wandbuser: 
 wandbproject: 
 
 # data
 dataset: "hm3"
 datapath: "/cluster/scratch/lmilikic/hm3d/episodes/train_episodes"
+valpath: "/cluster/scratch/lmilikic/hm3d/episodes/val_episodes"
 datatype: ".mp4" # [.mp4, .png, .jpg]
 doaug: "rctraj"
+task_type: "man"
 
 agent:
   _target_: vip.VIP

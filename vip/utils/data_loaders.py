@@ -28,6 +28,7 @@ import pickle
 from torchvision.utils import save_image
 import json
 import random
+import math
 
 
 def get_ind(vid, index, ds="ego4d"):
@@ -41,7 +42,7 @@ def get_ind(vid, index, ds="ego4d"):
 
 ## Data Loader for VIP
 class VIPBuffer(IterableDataset):
-    def __init__(self, datasource='ego4d', datapath=None, data_type=".png", num_workers=10, doaug="none", task_type="man"):
+    def __init__(self, datasource='ego4d', datapath=None, data_type=".png", num_workers=10, max_dist=math.inf, doaug="none", task_type="man"):
         self._num_workers = max(1, num_workers)
         self.datasource = datasource
         self.datapath = datapath
@@ -50,6 +51,9 @@ class VIPBuffer(IterableDataset):
         assert(data_type is not None)
         self.doaug = doaug
         self.task_type = task_type
+        if max_dist == -1:
+            max_dist=math.inf 
+        self.max_dist = max_dist
         
         # Augmentations
         self.preprocess = torch.nn.Sequential(
@@ -96,7 +100,7 @@ class VIPBuffer(IterableDataset):
 
         # Sample (o_t, o_k, o_k+1, o_T) for VIP training
         start_ind = np.random.randint(0, vidlen-2)  
-        end_ind = np.random.randint(start_ind+1, vidlen)
+        end_ind = np.random.randint(start_ind+1, min(vidlen, start_ind + self.max_dist + 1))
 
         s0_ind_vip = np.random.randint(start_ind, end_ind + 1)
         s1_ind_vip = min(s0_ind_vip+1, end_ind)
