@@ -50,17 +50,8 @@ def load_vip(modelid='resnet50'):
         if modelid == "resnet50":
             modelurl= "https://pytorch.s3.amazonaws.com/models/rl/vip/model.pt"
             configurl = "https://pytorch.s3.amazonaws.com/models/rl/vip/config.yaml"
-        elif modelid == "dinov2":
-            if not os.path.exists(modelpath):
-                raise ValueError("DinoV2-based model not given")
-        elif modelid in ["vip-resnet50-nav", "vip-resnet50-nav-2"]:
-            if not os.path.exists(modelpath):
-                raise ValueError("Resnet50-nav model not given")
-        elif modelid in ["vip-dino", "vip-dino-2"]:
-            if not os.path.exists(modelpath):
-                raise ValueError("Resnet50-nav model not given")
-        else:
-            raise NameError('Invalid Model ID')
+        elif not os.path.exists(modelpath):
+            raise ValueError(f"{modelpath} model not given")
             
         if not os.path.exists(modelpath):
             load_state_dict_from_url(modelurl, folderpath)
