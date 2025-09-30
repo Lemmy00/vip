@@ -68,12 +68,9 @@ class DistanceModel(nn.Module):
         self.dist_type = dist_type
         if self.dist_type == "linear":
             self.head = nn.Sequential(
-                nn.Linear(self.embed_dim, self.output_dim),
-                nn.Softplus()
+                nn.Linear(self.embed_dim, 1),
+                nn.ReLU(inplace=True)
             )
-        elif self.dist_type == "l2":
-            # For L2, the head is an identity and the final distance is computed via norm.
-            self.head = nn.Identity()
         else:
             raise ValueError(f"Unsupported head type: {dist_type}")
 

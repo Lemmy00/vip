@@ -14,6 +14,7 @@ from torchvision import transforms
 from pathlib import Path
 from torchvision.utils import save_image
 import torchvision.transforms as T
+from transformers import AutoImageProcessor, Dinov2Model
 
 
 class DinoDistModel(nn.Module):

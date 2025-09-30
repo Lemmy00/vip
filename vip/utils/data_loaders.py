@@ -29,7 +29,9 @@ from torchvision.utils import save_image
 import json
 import random
 import math
-
+import zipfile
+import io
+import av
 
 def get_ind(vid, index, ds="ego4d"):
     if ds == "ego4d":
@@ -92,8 +94,8 @@ class VIPBuffer(IterableDataset):
             if self.data_type in ['.png', '.jpg']:
                 vidlen = len(glob.glob(f'{vid}/*{self.data_type}'))
             elif self.data_type == '.mp4':
-                loaded_video, _, _ = torchvision.io.read_video(os.path.join(vid, "trajectory.mp4"), pts_unit='sec', output_format='TCHW')
-                loaded_video = loaded_video.to(torch.float32) / 255.0
+                loaded_video, _ = self._read_from_zip(vid)
+                loaded_video = loaded_video.to(torch.float32).div(255.0)
                 vidlen = len(loaded_video)
             else:
                 raise ValueError(f'Expected data types are: ".png", ".jpg", or ".mp4" but {self.data_type} given.')
@@ -128,7 +130,7 @@ class VIPBuffer(IterableDataset):
         if self.doaug == "rctraj":
             ### Encode each image in the video at once the same way
             allims = torch.stack([im0, img, imts0_vip, imts1_vip], 0)
-            allims_aug = self.aug(allims / 255.0) * 255.0
+            allims_aug = self.aug(allims)
 
             im0 = allims_aug[0]
             img = allims_aug[1]
@@ -148,3 +150,30 @@ class VIPBuffer(IterableDataset):
     def __iter__(self):
         while True:
             yield self._sample()
+
+    @staticmethod
+    def _read_from_zip(zip_path: str):
+        """
+        Load 'trajectory.mp4', 'goal_description.txt'
+        Returns: (video_tensor, goal_description)
+        - video_tensor: [T, C, H, W] float32
+        - goal_description: str
+        """
+        with zipfile.ZipFile(zip_path) as zf:
+            mp4_bytes = zf.read("trajectory.mp4")
+            goal_description = zf.read("goal_category.txt")
+        
+        # Decode video
+        with io.BytesIO(mp4_bytes) as f:
+            with av.open(f) as container:
+                frames = [
+                    torch.from_numpy(frame.to_ndarray(format='rgb24')).permute(2, 0, 1)
+                    for frame in container.decode(video=0)
+                ]
+        if not frames:
+            raise RuntimeError("No frames found in video")
+        video_tensor = torch.stack(frames).float()  # [T, C, H, W]
+
+        goal_description = goal_description.decode('utf-8')
+
+        return video_tensor, goal_description

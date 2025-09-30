@@ -18,7 +18,7 @@ import copy
 VALID_ARGS = [
     "_target_", "device", "lr", "hidden_dim", "size",
     "l2weight", "l1weight", "num_negatives", "dist_type",
-    "output_dim", "decoder_layers", "gamma"
+    "output_dim", "decoder_layers", "gamma", "dino_model_name"
 ]
 if torch.cuda.is_available():
     device = "cuda"

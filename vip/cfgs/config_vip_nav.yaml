@@ -9,10 +9,11 @@ load_snap: ""
 
 # replay buffer
 num_workers: 16
-batch_size: 32 
-train_steps: 16001
-eval_freq: 2000
+batch_size: 16 
+train_steps: 200001
+eval_freq: 20000
 task_type: "nav"
+max_dist: 100
 
 # misc
 seed: 1
@@ -25,17 +26,21 @@ wandbproject:
 
 # data
 dataset: "hm3"
-datapath: "/cluster/scratch/lmilikic/hm3d/episodes/train_episodes"
-valpath: "/cluster/scratch/lmilikic/hm3d/episodes/val_episodes"
+root: ${oc.env:TMPDIR}
+datapath: ${root}/dist_data/train_episodes/habitat
+valpath: ${root}/dist_data/val_episodes/habitat
 datatype: ".mp4" # [.mp4, .png, .jpg]
 doaug: "rctraj"
 
 agent:
   _target_: vip.DistanceModel
   device: ${device}
-  lr: 1e-4
-  output_dim: 1024
-  decoder_layers: 3
+  dino_model_name: dinov2-small
+  lr: 3e-5
+  output_dim: 1
+  decoder_layers: 4
   dist_type: "linear"
-  num_negatives: 3
+  num_negatives: 0
   gamma: 0.98
+  l2weight: 0.0001
+  l1weight: 0.0001

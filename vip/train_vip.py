@@ -122,6 +122,7 @@ class Workspace:
     def load_snapshot(self, snapshot_path):
         payload = torch.load(snapshot_path)
         self.model.load_state_dict(payload['vip'])
+        print("Checkpoint loaded successfully.")
         try:
             self._global_step = payload['global_step']
         except:

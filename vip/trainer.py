@@ -148,7 +148,7 @@ class Trainer():
         r =  b_reward.to(V_0.device) # R(s;g) = (s==g) - 1 
         V_s = model.module.decode(es0_vip, eg)
         V_s_next = model.module.decode(es1_vip, eg)
-        V_loss = (1-model.module.gamma) * V_0.mean() + torch.log(epsilon + torch.mean(torch.exp(r + model.module.gamma * V_s_next - V_s)))
+        V_loss = (1-model.module.gamma) * -V_0.mean() + torch.log(epsilon + torch.mean(torch.exp(-(r + model.module.gamma * V_s_next - V_s))))
 
         # Optionally, add additional "negative" observations
         V_s_neg = []
@@ -172,15 +172,9 @@ class Trainer():
         metrics['full_loss'] = full_loss.item()
         t4 = time.time()
 
-        if not eval:
-            model.module.encoder_opt.zero_grad()
-            loss_phi = -full_loss
-            loss_phi.backward(retain_graph=True)  
-            model.module.encoder_opt.step()
-
+        if not eval:            
             model.module.decoder_opt.zero_grad()
-            loss_v = full_loss
-            loss_v.backward()
+            full_loss.backward()
             model.module.decoder_opt.step()
         t5 = time.time()    
 
