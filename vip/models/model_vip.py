@@ -15,6 +15,7 @@ from pathlib import Path
 from torchvision.utils import save_image
 import torchvision.transforms as T
 from transformers import AutoImageProcessor, Dinov2Model
+from torchvision import transforms
 
 
 class DinoDistModel(nn.Module):
@@ -40,6 +41,12 @@ class VIP(nn.Module):
         self.gamma = gamma
         self.size = size # Resnet size
         self.num_negatives = num_negatives
+
+        self.tensor_processor = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
 
         ## Distances and Metrics
         self.cs = torch.nn.CosineSimilarity(1)
@@ -73,6 +80,29 @@ class VIP(nn.Module):
 
         ## Optimizer
         self.encoder_opt = torch.optim.Adam(params, lr = lr)
+
+    def preprocess(self, images) -> torch.Tensor:
+        """
+        Preprocess the input images using either a list of images or tensors.
+        
+        Args:
+            images (Union[list, PIL.Image.Image, torch.Tensor]): One or more images.
+        
+        Returns:
+            torch.Tensor: A batch of processed images.
+        """
+        if torch.is_tensor(images):
+            if images.shape[-1] == 3:
+                if images.ndim == 4:
+                    images = images.permute(0, 3, 1, 2) # → [B, 3, H, W]
+                elif images.ndim == 3:
+                    images = images.permute(2, 0, 1) # → [3, H, W]
+
+            return self.tensor_processor(images.to(torch.float32).div(255.0))
+        elif isinstance(images, list) or isinstance(images, Image.Image):
+            processed = self.processor(images=images, return_tensors="pt")
+            return processed["pixel_values"]
+        raise ValueError("Unrecognized image type given for processing.")
 
     ## Forward Call (im --> representation)
     def forward(self, obs):
