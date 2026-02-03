@@ -27,7 +27,7 @@ setup(
     'torchvision>=0.8.2',
     'omegaconf',
     'hydra-core',
-    'pillow==9.0.1',
+    'pillow',
     'opencv-python',
     'matplotlib',
     'flatten_dict',
